@@ -1,120 +1,264 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <!-- Today's Summary -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Today's Summary</h3>
+<div class="container mt-4">
+    <!-- Daily Check-in Summary Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="fas fa-clipboard-check me-2"></i>Daily Check-in
+            </h3>
+        </div>
+        <div class="card-body">
+            <div id="lastCheckin" class="d-none">
+                <div class="alert mb-3" id="recommendationAlert">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-stethoscope me-2"></i>
+                        <span id="recommendationTitle">Recommendation</span>
+                    </h5>
+                    <p id="recommendationMessage" class="mb-0"></p>
+                </div>
+                <button class="btn btn-outline-primary" onclick="showCheckinModal()">
+                    <i class="fas fa-redo me-2"></i>Take Check-in Again
+                </button>
             </div>
-            <div class="card-body">
-                <div class="mb-4">
-                    <h4 class="mb-2">Sleep Quality</h4>
-                    <div class="progress mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: {{ sleep_quality }}%">
-                            {{ sleep_quality }}%
+            <div id="noCheckin">
+                <p class="text-muted mb-3">You haven't completed your daily check-in yet.</p>
+                <button class="btn btn-primary" onclick="showCheckinModal()">
+                    <i class="fas fa-clipboard-check me-2"></i>Start Daily Check-in
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Summary -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Today's Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h4 class="mb-2">Sleep Quality</h4>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" style="width: {{ sleep_quality }}%">
+                                {{ sleep_quality }}%
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="mb-4">
-                    <h4 class="mb-2">Exercise Goals</h4>
-                    <div class="progress mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: {{ exercise_progress }}%">
-                            {{ exercise_progress }}%
+                    <div class="mb-4">
+                        <h4 class="mb-2">Exercise Goals</h4>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" style="width: {{ exercise_progress }}%">
+                                {{ exercise_progress }}%
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="mb-4">
-                    <h4 class="mb-2">Mood Level</h4>
-                    <div class="progress mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: {{ mood_level }}%">
-                            {{ mood_level }}%
+                    <div class="mb-4">
+                        <h4 class="mb-2">Mood Level</h4>
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar" style="width: {{ mood_level }}%">
+                                {{ mood_level }}%
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Upcoming Activities -->
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Activities</h3>
+        <!-- Upcoming Activities -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Activities</h3>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_activities %}
+                    <div class="list-group">
+                        {% for activity in upcoming_activities %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-1">{{ activity.name }}</h5>
+                                <span class="badge bg-primary">{{ activity.time }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-day text-muted" style="font-size: 3rem;"></i>
+                        <p class="lead text-muted mt-3">No upcoming activities</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                {% if upcoming_activities %}
-                <div class="list-group">
-                    {% for activity in upcoming_activities %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-1">{{ activity.name }}</h5>
-                            <span class="badge bg-primary">{{ activity.time }}</span>
+        </div>
+
+        <!-- Recent Progress -->
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-chart-line me-2"></i>Recent Progress</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div id="speechChart"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div id="sleepChart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Today's Recommendations</h3>
+                </div>
+                <div class="card-body">
+                    {% for category, recommendations in recommendations.items() %}
+                    <div class="mb-4">
+                        <h4 class="mb-3">
+                            {% if category == 'Exercise' %}
+                                <i class="fas fa-running me-2"></i>
+                            {% elif category == 'Sleep' %}
+                                <i class="fas fa-bed me-2"></i>
+                            {% elif category == 'Mental Health' %}
+                                <i class="fas fa-brain me-2"></i>
+                            {% else %}
+                                <i class="fas fa-star me-2"></i>
+                            {% endif %}
+                            {{ category }}
+                        </h4>
+                        <div class="list-group">
+                            {% for rec in recommendations %}
+                            <div class="list-group-item">
+                                <i class="fas fa-check text-primary me-2"></i>
+                                {{ rec }}
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
                     {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-calendar-day text-muted" style="font-size: 3rem;"></i>
-                    <p class="lead text-muted mt-3">No upcoming activities</p>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Recent Progress -->
-    <div class="col-md-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-chart-line me-2"></i>Recent Progress</h3>
+<!-- Daily Check-in Modal -->
+<div class="modal fade" id="checkinModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-check me-2"></i>Daily Check-in
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div id="speechChart"></div>
+            <div class="modal-body">
+                <form id="checkinForm">
+                    <div class="mb-4">
+                        <p class="text-muted">Please answer the following questions about how you're feeling today:</p>
                     </div>
-                    <div class="col-md-6">
-                        <div id="sleepChart"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recommendations -->
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Today's Recommendations</h3>
-            </div>
-            <div class="card-body">
-                {% for category, recommendations in recommendations.items() %}
-                <div class="mb-4">
-                    <h4 class="mb-3">
-                        {% if category == 'Exercise' %}
-                            <i class="fas fa-running me-2"></i>
-                        {% elif category == 'Sleep' %}
-                            <i class="fas fa-bed me-2"></i>
-                        {% elif category == 'Mental Health' %}
-                            <i class="fas fa-brain me-2"></i>
-                        {% else %}
-                            <i class="fas fa-star me-2"></i>
-                        {% endif %}
-                        {{ category }}
-                    </h4>
-                    <div class="list-group">
-                        {% for rec in recommendations %}
+                    
+                    <div class="list-group mb-4">
                         <div class="list-group-item">
-                            <i class="fas fa-check text-primary me-2"></i>
-                            {{ rec }}
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Have you been getting slower in your usual daily activities?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="slower_activities" value="true" id="slower_yes">
+                                    <label class="btn btn-outline-primary" for="slower_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="slower_activities" value="false" id="slower_no" checked>
+                                    <label class="btn btn-outline-primary" for="slower_no">No</label>
+                                </div>
+                            </div>
                         </div>
-                        {% endfor %}
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Is your handwriting smaller?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="smaller_handwriting" value="true" id="handwriting_yes">
+                                    <label class="btn btn-outline-primary" for="handwriting_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="smaller_handwriting" value="false" id="handwriting_no" checked>
+                                    <label class="btn btn-outline-primary" for="handwriting_no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Is your speech slurred or softer?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="speech_changes" value="true" id="speech_yes">
+                                    <label class="btn btn-outline-primary" for="speech_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="speech_changes" value="false" id="speech_no" checked>
+                                    <label class="btn btn-outline-primary" for="speech_no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Do you have trouble rising from a chair?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="chair_difficulty" value="true" id="chair_yes">
+                                    <label class="btn btn-outline-primary" for="chair_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="chair_difficulty" value="false" id="chair_no" checked>
+                                    <label class="btn btn-outline-primary" for="chair_no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Do your lips, hands, arms and/or legs shake?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="tremors" value="true" id="tremors_yes">
+                                    <label class="btn btn-outline-primary" for="tremors_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="tremors" value="false" id="tremors_no" checked>
+                                    <label class="btn btn-outline-primary" for="tremors_no">No</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <label class="form-check-label flex-grow-1">
+                                    Have you noticed more stiffness?
+                                </label>
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="increased_stiffness" value="true" id="stiffness_yes">
+                                    <label class="btn btn-outline-primary" for="stiffness_yes">Yes</label>
+                                    <input type="radio" class="btn-check" name="increased_stiffness" value="false" id="stiffness_no" checked>
+                                    <label class="btn btn-outline-primary" for="stiffness_no">No</label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                {% endfor %}
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>Submit Check-in
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -200,5 +344,73 @@
         Plotly.Plots.resize('speechChart');
         Plotly.Plots.resize('sleepChart');
     });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show check-in modal on page load if no check-in today
+    if (!localStorage.getItem('lastCheckin') || 
+        new Date(localStorage.getItem('lastCheckin')).toDateString() !== new Date().toDateString()) {
+        showCheckinModal();
+    } else {
+        showLastCheckin();
+    }
+});
+
+function showCheckinModal() {
+    const modal = new bootstrap.Modal(document.getElementById('checkinModal'));
+    modal.show();
+}
+
+document.getElementById('checkinForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch("{{ url_for('submit_checkin') }}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            localStorage.setItem('lastCheckin', new Date().toISOString());
+            localStorage.setItem('lastRecommendation', JSON.stringify(data.recommendation));
+            showLastCheckin();
+            bootstrap.Modal.getInstance(document.getElementById('checkinModal')).hide();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting the check-in');
+    });
+});
+
+function showLastCheckin() {
+    const recommendation = JSON.parse(localStorage.getItem('lastRecommendation'));
+    if (!recommendation) return;
+    
+    document.getElementById('noCheckin').classList.add('d-none');
+    document.getElementById('lastCheckin').classList.remove('d-none');
+    
+    const alert = document.getElementById('recommendationAlert');
+    if (recommendation.urgent) {
+        alert.className = 'alert alert-danger mb-3';
+        document.getElementById('recommendationTitle').textContent = 'Urgent Recommendation';
+    } else if (recommendation.soon) {
+        alert.className = 'alert alert-warning mb-3';
+        document.getElementById('recommendationTitle').textContent = 'Important Recommendation';
+    } else if (recommendation.monitor) {
+        alert.className = 'alert alert-info mb-3';
+        document.getElementById('recommendationTitle').textContent = 'Monitoring Recommendation';
+    } else {
+        alert.className = 'alert alert-success mb-3';
+        document.getElementById('recommendationTitle').textContent = 'Status Update';
+    }
+    
+    document.getElementById('recommendationMessage').textContent = recommendation.message;
+}
 </script>
 {% endblock %}

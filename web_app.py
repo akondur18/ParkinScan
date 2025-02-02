@@ -322,6 +322,45 @@ def analyze_speech():
         }
     })
 
+@app.route('/api/checkin', methods=['POST'])
+@login_required
+def submit_checkin():
+    responses = {
+        'slower_activities': request.form.get('slower_activities') == 'true',
+        'smaller_handwriting': request.form.get('smaller_handwriting') == 'true',
+        'speech_changes': request.form.get('speech_changes') == 'true',
+        'chair_difficulty': request.form.get('chair_difficulty') == 'true',
+        'tremors': request.form.get('tremors') == 'true',
+        'increased_stiffness': request.form.get('increased_stiffness') == 'true'
+    }
+    
+    # Count concerning symptoms
+    symptom_count = sum(1 for value in responses.values() if value)
+    
+    # Determine recommendation
+    recommendation = {
+        'urgent': symptom_count >= 4,
+        'soon': symptom_count >= 2,
+        'monitor': symptom_count > 0,
+        'message': get_recommendation_message(symptom_count, responses)
+    }
+    
+    # In a real app, save to database
+    return jsonify({
+        'status': 'success',
+        'recommendation': recommendation
+    })
+
+def get_recommendation_message(symptom_count, responses):
+    if symptom_count >= 4:
+        return "Based on your symptoms, we recommend scheduling an appointment with your doctor as soon as possible to discuss these changes."
+    elif symptom_count >= 2:
+        return "Consider scheduling a check-up with your doctor in the next few weeks to monitor these symptoms."
+    elif symptom_count > 0:
+        return "Continue monitoring your symptoms and make note of any changes. Discuss these at your next regular appointment."
+    else:
+        return "No immediate concerns. Continue your regular check-ups and monitoring."
+
 @app.route('/logout')
 @login_required
 def logout():
