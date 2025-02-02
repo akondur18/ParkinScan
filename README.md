@@ -147,13 +147,10 @@ ParkinScan/
 4. Push to the branch
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
-
-- Healthcare professionals who provided guidance
+- Developers: Srimathi Vadivel and Anushka Kondur
+- Healthcare professionals and students who provided guidance
 - Parkinson's Disease research community
 - Open source contributors
 - Beta testers and early users
