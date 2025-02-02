@@ -154,10 +154,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## Acknowledgments
 
 - Developers: Srimathi Vadivel and Anushka Kondur
-- Healthcare professionals and students who provided guidance
+- Healthcare professionals and students who provided guidance (Tristen Franklin)
 - Parkinson's Disease research community
 - Open source contributors
-- Beta testers and early users
+- Beta testers and early users (Shakthi Kodeswaran)
 
 ## Support
 
