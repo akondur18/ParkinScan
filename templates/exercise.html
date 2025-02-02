@@ -1,13 +1,14 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
-<div class="section">
-    <h2>Exercise Planning</h2>
+<div class="container mt-4">
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3>Daily Exercise Plan</h3>
+                    <h3 class="mb-0">
+                        <i class="fas fa-dumbbell me-2"></i>Exercise Plan
+                    </h3>
                 </div>
                 <div class="card-body">
                     <form id="exerciseForm">
@@ -25,7 +26,11 @@
                                    min="1" max="10" value="5" id="energyLevel">
                             <div class="text-center" id="energyValue">5</div>
                         </div>
-                        <button type="submit" class="btn btn-primary">Generate Plan</button>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-play me-2"></i>Generate Plan
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -33,19 +38,22 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3>Today's Exercises</h3>
+                    <h3 class="mb-0">
+                        <i class="fas fa-list-check me-2"></i>Today's Exercises
+                    </h3>
                 </div>
                 <div class="card-body">
                     <div id="exercisePlan" class="d-none">
                         <div class="list-group" id="exerciseList">
                         </div>
-                        <div class="mt-4">
-                            <button class="btn btn-success" id="startWorkout">
-                                <i class="fas fa-play"></i> Start Workout
+                        <div class="mt-4 d-grid">
+                            <button class="btn btn-success btn-lg" id="startWorkout">
+                                <i class="fas fa-play me-2"></i>Start Workout
                             </button>
                         </div>
                     </div>
-                    <div id="noExercises" class="text-center">
+                    <div id="noExercises" class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Generate a plan to see exercises</p>
                     </div>
                 </div>
@@ -57,23 +65,25 @@
     <div class="modal fade" id="exerciseModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Exercise Session</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-running me-2"></i>Exercise Session
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body text-center">
-                    <h2 id="currentExercise"></h2>
+                <div class="modal-body text-center p-4">
+                    <h2 id="currentExercise" class="mb-3"></h2>
+                    <p id="exerciseNote" class="lead text-muted mb-4"></p>
                     <div class="display-1 mb-4" id="exerciseTimer">00:00</div>
-                    <div class="progress mb-4">
+                    <div class="progress mb-4" style="height: 10px;">
                         <div id="exerciseProgress" class="progress-bar" role="progressbar"></div>
                     </div>
-                    <p id="exerciseNote" class="lead"></p>
                     <div class="mt-4">
-                        <button class="btn btn-lg btn-primary me-2" id="pauseExercise">
-                            <i class="fas fa-pause"></i> Pause
+                        <button class="btn btn-lg btn-outline-primary me-2" id="pauseExercise">
+                            <i class="fas fa-pause me-2"></i>Pause
                         </button>
-                        <button class="btn btn-lg btn-success" id="nextExercise">
-                            <i class="fas fa-forward"></i> Next
+                        <button class="btn btn-lg btn-primary" id="nextExercise">
+                            <i class="fas fa-forward me-2"></i>Next
                         </button>
                     </div>
                 </div>
@@ -132,7 +142,7 @@ function displayExercisePlan(plan) {
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-1">${exercise.activity_type}</h5>
-                    <p class="mb-1">${exercise.notes}</p>
+                    <p class="mb-1 text-muted">${exercise.notes}</p>
                 </div>
                 <span class="badge bg-primary rounded-pill">${exercise.duration} min</span>
             </div>
@@ -198,8 +208,8 @@ function updateExerciseTimer() {
 document.getElementById('pauseExercise').addEventListener('click', function() {
     isPaused = !isPaused;
     this.innerHTML = isPaused ? 
-        '<i class="fas fa-play"></i> Resume' : 
-        '<i class="fas fa-pause"></i> Pause';
+        '<i class="fas fa-play me-2"></i>Resume' : 
+        '<i class="fas fa-pause me-2"></i>Pause';
 });
 
 // Handle next exercise
@@ -208,14 +218,8 @@ document.getElementById('nextExercise').addEventListener('click', function() {
         currentExerciseIndex++;
         startExercise();
     } else {
-        alert('Workout completed!');
-        bootstrap.Modal.getInstance(document.getElementById('exerciseModal')).hide();
+        alert('This is the last exercise!');
     }
-});
-
-// Clean up timer when modal is closed
-document.getElementById('exerciseModal').addEventListener('hidden.bs.modal', function() {
-    if (exerciseTimer) clearInterval(exerciseTimer);
 });
 </script>
 {% endblock %}

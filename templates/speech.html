@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="section">
@@ -35,17 +35,14 @@
                     <h3>Analysis Results</h3>
                 </div>
                 <div class="card-body">
-                    <div id="results" class="d-none">
+                    <div id="analysisResults" class="d-none">
                         <div class="mb-4">
                             <h4>Risk Score</h4>
-                            <div class="progress">
-                                <div id="riskScore" class="progress-bar" role="progressbar"></div>
-                            </div>
+                            <p id="riskScore"></p>
                         </div>
                         <div class="mb-4">
                             <h4>Speech Patterns</h4>
-                            <ul id="patterns" class="list-group">
-                            </ul>
+                            <div id="speechPatterns"></div>
                         </div>
                         <div>
                             <h4>Recommendations</h4>
@@ -67,96 +64,128 @@
 <script>
 let isRecording = false;
 let timer;
+let mediaRecorder;
+let audioChunks = [];
 
 document.getElementById('recordButton').addEventListener('click', function() {
-    if (!isRecording) {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecording();
+    } else {
         startRecording();
     }
 });
 
 function startRecording() {
-    isRecording = true;
-    const button = document.getElementById('recordButton');
-    const timerDisplay = document.getElementById('timer');
-    button.disabled = true;
-    button.classList.replace('btn-primary', 'btn-danger');
-    document.getElementById('recordText').textContent = 'Recording...';
-    timerDisplay.classList.remove('d-none');
-    
-    let timeLeft = 10;
-    timer = setInterval(() => {
-        timeLeft--;
-        timerDisplay.textContent = timeLeft;
-        if (timeLeft <= 0) {
-            stopRecording();
-        }
-    }, 1000);
-    
-    // Start recording
-    fetch("{{ url_for('record_speech') }}", {
-        method: 'POST'
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            displayResults(data.analysis);
-        } else {
-            alert('Error: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred during recording');
-    })
-    .finally(() => {
-        stopRecording();
-    });
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            
+            const recordButton = document.getElementById('recordButton');
+            recordButton.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+            recordButton.classList.remove('btn-primary');
+            recordButton.classList.add('btn-danger');
+            
+            document.getElementById('timer').classList.remove('d-none');
+            startTimer();
+            
+            mediaRecorder.addEventListener('dataavailable', event => {
+                audioChunks.push(event.data);
+            });
+            
+            mediaRecorder.addEventListener('stop', () => {
+                const audioBlob = new Blob(audioChunks);
+                const formData = new FormData();
+                formData.append('audio', audioBlob);
+                
+                fetch("{{ url_for('analyze_speech') }}", {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        displayResults(data.analysis);
+                    } else {
+                        alert('Error analyzing speech: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while analyzing speech');
+                });
+            });
+        });
 }
 
 function stopRecording() {
     isRecording = false;
     clearInterval(timer);
-    const button = document.getElementById('recordButton');
-    const timerDisplay = document.getElementById('timer');
-    button.disabled = false;
-    button.classList.replace('btn-danger', 'btn-primary');
-    document.getElementById('recordText').textContent = 'Start Recording';
-    timerDisplay.classList.add('d-none');
+    mediaRecorder.stop();
+    const recordButton = document.getElementById('recordButton');
+    recordButton.innerHTML = '<i class="fas fa-microphone"></i> Start Recording';
+    recordButton.classList.remove('btn-danger');
+    recordButton.classList.add('btn-primary');
+    document.getElementById('timer').classList.add('d-none');
+}
+
+function startTimer() {
+    let timeLeft = 10;
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('timer').textContent = timeLeft;
+        if (timeLeft <= 0) {
+            stopRecording();
+        }
+    }, 1000);
 }
 
 function displayResults(analysis) {
-    document.getElementById('noResults').classList.add('d-none');
-    document.getElementById('results').classList.remove('d-none');
+    const resultsDiv = document.getElementById('analysisResults');
+    resultsDiv.classList.remove('d-none');
     
-    // Update risk score
-    const riskScore = document.getElementById('riskScore');
-    const score = Math.round(analysis.risk_score * 100);
-    riskScore.style.width = score + '%';
-    riskScore.textContent = score + '%';
-    riskScore.className = 'progress-bar ' + 
-        (score < 30 ? 'bg-success' : 
-         score < 70 ? 'bg-warning' : 
-         'bg-danger');
+    // Display risk score
+    document.getElementById('riskScore').textContent = analysis.risk_score;
     
-    // Update patterns
-    const patternsList = document.getElementById('patterns');
-    patternsList.innerHTML = '';
+    // Display speech patterns
+    const patternsDiv = document.getElementById('speechPatterns');
+    patternsDiv.innerHTML = '';
+    
     analysis.patterns.forEach(pattern => {
-        const li = document.createElement('li');
-        li.className = 'list-group-item';
-        li.textContent = pattern;
-        patternsList.appendChild(li);
+        const card = document.createElement('div');
+        card.className = 'card mb-3';
+        card.innerHTML = `
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">${pattern.type}</h5>
+                    <span class="badge bg-primary rounded-pill">${pattern.score}%</span>
+                </div>
+                <p class="card-text text-muted mt-2">${pattern.note}</p>
+                <div class="progress mt-2" style="height: 10px;">
+                    <div class="progress-bar" role="progressbar" 
+                         style="width: ${pattern.score}%;" 
+                         aria-valuenow="${pattern.score}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        `;
+        patternsDiv.appendChild(card);
     });
     
-    // Update recommendations
-    const recommendationsList = document.getElementById('recommendations');
-    recommendationsList.innerHTML = '';
+    // Display recommendations
+    const recsDiv = document.getElementById('recommendations');
+    recsDiv.innerHTML = '';
+    
     analysis.recommendations.forEach(rec => {
         const li = document.createElement('li');
         li.className = 'list-group-item';
-        li.textContent = rec;
-        recommendationsList.appendChild(li);
+        li.innerHTML = `<i class="fas fa-lightbulb text-primary me-2"></i>${rec}`;
+        recsDiv.appendChild(li);
     });
+    
+    document.getElementById('noResults').classList.add('d-none');
 }
 </script>
 {% endblock %}

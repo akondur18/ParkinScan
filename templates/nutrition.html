@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="section">
@@ -144,7 +144,7 @@ document.getElementById('foodItems').addEventListener('click', function(e) {
     }
 });
 
-// Handle form submission
+// Handle nutrition form submission
 document.getElementById('nutritionForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
@@ -158,9 +158,8 @@ document.getElementById('nutritionForm').addEventListener('submit', function(e) 
     .then(data => {
         if (data.status === 'success') {
             updateNutritionSummary(data.summary);
-            updateRecommendations(data.recommendations);
-            this.reset();
             alert('Meal logged successfully!');
+            this.reset();
         } else {
             alert('Error: ' + data.message);
         }

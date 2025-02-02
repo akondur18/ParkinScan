@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="section">
@@ -71,7 +71,7 @@
         document.getElementById('qualityValue').textContent = e.target.value;
     });
 
-    // Handle form submission
+    // Handle sleep form submission
     document.getElementById('sleepForm').addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -84,14 +84,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                location.reload();
+                alert('Sleep logged successfully!');
+                this.reset();
             } else {
                 alert('Error: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving sleep data');
+            alert('An error occurred while logging sleep');
         });
     });
 

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-8 text-center">
+            <div class="card">
+                <div class="card-body py-5">
+                    <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+                    <h2 class="mt-4">Goodbye, {{ username }}!</h2>
+                    <p class="lead text-muted mb-4">You have been successfully logged out.</p>
+                    
+                    <div class="mb-4">
+                        <p>Thank you for using ParkinScan to monitor your health.</p>
+                        <p class="small text-muted">Remember to complete your daily check-in when you return!</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>Log In Again
+                        </a>
+                    </div>
+
+                    <div class="mt-4">
+                        <p class="small text-muted">
+                            If you have any questions or need assistance, please contact our support team.
+                            <br>
+                            <a href="mailto:support@parkinscan.com" class="text-decoration-none">
+                                <i class="fas fa-envelope me-1"></i>support@parkinscan.com
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <p class="small text-muted">
+                    <i class="fas fa-lock me-1"></i>
+                    Your session has been securely terminated
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

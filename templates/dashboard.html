@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends "base.html" %}
 
 {% block content %}
 <div class="row">
@@ -6,29 +6,29 @@
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3>Today's Summary</h3>
+                <h3 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Today's Summary</h3>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <h4>Sleep Quality</h4>
-                    <div class="progress">
+                <div class="mb-4">
+                    <h4 class="mb-2">Sleep Quality</h4>
+                    <div class="progress mb-2">
                         <div class="progress-bar" role="progressbar" style="width: {{ sleep_quality }}%">
                             {{ sleep_quality }}%
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <h4>Exercise Goals</h4>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ exercise_progress }}%">
+                <div class="mb-4">
+                    <h4 class="mb-2">Exercise Goals</h4>
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" style="width: {{ exercise_progress }}%">
                             {{ exercise_progress }}%
                         </div>
                     </div>
                 </div>
-                <div class="mb-3">
-                    <h4>Mood Level</h4>
-                    <div class="progress">
-                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ mood_level }}%">
+                <div class="mb-4">
+                    <h4 class="mb-2">Mood Level</h4>
+                    <div class="progress mb-2">
+                        <div class="progress-bar" role="progressbar" style="width: {{ mood_level }}%">
                             {{ mood_level }}%
                         </div>
                     </div>
@@ -41,31 +41,44 @@
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-header">
-                <h3>Upcoming Activities</h3>
+                <h3 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Upcoming Activities</h3>
             </div>
             <div class="card-body">
-                <ul class="list-group">
+                {% if upcoming_activities %}
+                <div class="list-group">
                     {% for activity in upcoming_activities %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ activity.name }}
-                        <span class="badge bg-primary rounded-pill">{{ activity.time }}</span>
-                    </li>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-1">{{ activity.name }}</h5>
+                            <span class="badge bg-primary">{{ activity.time }}</span>
+                        </div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-calendar-day text-muted" style="font-size: 3rem;"></i>
+                    <p class="lead text-muted mt-3">No upcoming activities</p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <!-- Recent Progress -->
     <div class="col-md-12 mb-4">
-        <div class="section">
-            <h2>Recent Progress</h2>
-            <div class="row">
-                <div class="col-md-6">
-                    <div id="speechChart"></div>
-                </div>
-                <div class="col-md-6">
-                    <div id="sleepChart"></div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0"><i class="fas fa-chart-line me-2"></i>Recent Progress</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div id="speechChart"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <div id="sleepChart"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -75,17 +88,31 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3>Today's Recommendations</h3>
+                <h3 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Today's Recommendations</h3>
             </div>
             <div class="card-body">
                 {% for category, recommendations in recommendations.items() %}
                 <div class="mb-4">
-                    <h4>{{ category }}</h4>
-                    <ul class="list-group">
+                    <h4 class="mb-3">
+                        {% if category == 'Exercise' %}
+                            <i class="fas fa-running me-2"></i>
+                        {% elif category == 'Sleep' %}
+                            <i class="fas fa-bed me-2"></i>
+                        {% elif category == 'Mental Health' %}
+                            <i class="fas fa-brain me-2"></i>
+                        {% else %}
+                            <i class="fas fa-star me-2"></i>
+                        {% endif %}
+                        {{ category }}
+                    </h4>
+                    <div class="list-group">
                         {% for rec in recommendations %}
-                        <li class="list-group-item">{{ rec }}</li>
+                        <div class="list-group-item">
+                            <i class="fas fa-check text-primary me-2"></i>
+                            {{ rec }}
+                        </div>
                         {% endfor %}
-                    </ul>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -95,6 +122,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
     // Speech Progress Chart
     const speechData = {{ speech_data | tojson }};
@@ -102,11 +130,36 @@
         x: speechData.dates,
         y: speechData.scores,
         type: 'scatter',
+        mode: 'lines+markers',
+        line: {
+            color: '#0077B6',
+            width: 3
+        },
+        marker: {
+            color: '#0077B6',
+            size: 8
+        },
         name: 'Speech Analysis Score'
     }], {
-        title: 'Speech Analysis Progress',
-        xaxis: { title: 'Date' },
-        yaxis: { title: 'Score' }
+        margin: { t: 30, r: 10, b: 40, l: 40 },
+        title: {
+            text: 'Speech Analysis Progress',
+            font: {
+                size: 16,
+                color: '#03045E'
+            }
+        },
+        xaxis: {
+            title: 'Date',
+            gridcolor: '#CAF0F8'
+        },
+        yaxis: {
+            title: 'Score',
+            gridcolor: '#CAF0F8'
+        },
+        paper_bgcolor: 'rgba(255,255,255,0.9)',
+        plot_bgcolor: 'rgba(255,255,255,0.9)',
+        showlegend: false
     });
 
     // Sleep Quality Chart
@@ -115,11 +168,37 @@
         x: sleepData.dates,
         y: sleepData.quality,
         type: 'bar',
+        marker: {
+            color: '#00B4D8'
+        },
         name: 'Sleep Quality'
     }], {
-        title: 'Sleep Quality Trend',
-        xaxis: { title: 'Date' },
-        yaxis: { title: 'Quality (%)' }
+        margin: { t: 30, r: 10, b: 40, l: 40 },
+        title: {
+            text: 'Sleep Quality Trend',
+            font: {
+                size: 16,
+                color: '#03045E'
+            }
+        },
+        xaxis: {
+            title: 'Date',
+            gridcolor: '#CAF0F8'
+        },
+        yaxis: {
+            title: 'Quality (%)',
+            gridcolor: '#CAF0F8',
+            range: [0, 100]
+        },
+        paper_bgcolor: 'rgba(255,255,255,0.9)',
+        plot_bgcolor: 'rgba(255,255,255,0.9)',
+        showlegend: false
+    });
+
+    // Make charts responsive
+    window.addEventListener('resize', function() {
+        Plotly.Plots.resize('speechChart');
+        Plotly.Plots.resize('sleepChart');
     });
 </script>
 {% endblock %}
